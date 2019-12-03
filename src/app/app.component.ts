@@ -4,6 +4,9 @@ import { Platform } from '@ionic/angular';
 import { SplashScreen } from '@ionic-native/splash-screen/ngx';
 import { StatusBar } from '@ionic-native/status-bar/ngx';
 
+import { FCM } from '@ionic-native/fcm/ngx';
+import { Router } from '@angular/router';
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -13,15 +16,46 @@ export class AppComponent {
   constructor(
     private platform: Platform,
     private splashScreen: SplashScreen,
-    private statusBar: StatusBar
+    private statusBar: StatusBar,
+    private fcm: FCM,
+    private router: Router
   ) {
     this.initializeApp();
+    this.fcm.subscribeToTopic('people');
   }
 
   initializeApp() {
     this.platform.ready().then(() => {
       this.statusBar.styleDefault();
       this.splashScreen.hide();
-    });
+      /* Inside platform ready of `initializeApp` function, 
+      add a function to get FCM token then print out to the browser console. */
+      this.fcm.getToken().then(token => {
+        console.log(token);
+      });
+
+
+      /* Add this function to refresh the FCM token. */
+      this.fcm.onTokenRefresh().subscribe(token => {
+        console.log(token);
+      });
+
+      /* Add this function to receive a push notification from Firebase Cloud Messaging (FCM). */
+      this.fcm.onNotification().subscribe(data => {
+        console.log(data);
+        if (data.wasTapped) {
+          console.log('Received in background');
+          this.router.navigate([data.landing_page, data.price]);
+        } else {
+          console.log('Received in foreground');
+          this.router.navigate([data.landing_page, data.price]);
+        }
+      });
+
+      /* If you plan to send push notification to the group of the topic, 
+      add these lines inside the platform ready. */
+      
+      
+    });//fin de initialize app
   }
 }
